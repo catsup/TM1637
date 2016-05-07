@@ -62,7 +62,7 @@ TM1637Display::TM1637Display(uint8_t pinClk, uint8_t pinDIO)
 	// Copy the pin numbers
 	m_pinClk = pinClk;
 	m_pinDIO = pinDIO;
-	
+
 	// Set the pin direction and default value.
 	// Both pins are set as inputs, allowing the pull-up resistors to pull them up
     pinMode(m_pinClk, INPUT);
@@ -82,15 +82,15 @@ void TM1637Display::setSegments(const uint8_t segments[], uint8_t length, uint8_
 	start();
 	writeByte(TM1637_I2C_COMM1);
 	stop();
-	
+
 	// Write COMM2 + first digit address
 	start();
 	writeByte(TM1637_I2C_COMM2 + (pos & 0x03));
-	
+
 	// Write the data bytes
-	for (uint8_t k=0; k < length; k++) 
+	for (uint8_t k=0; k < length; k++)
 	  writeByte(segments[k]);
-	  
+
 	stop();
 
 	// Write COMM3 + brightness
@@ -98,17 +98,17 @@ void TM1637Display::setSegments(const uint8_t segments[], uint8_t length, uint8_
 	writeByte(TM1637_I2C_COMM3 + (m_brightness & 0x0f));
 	stop();
 }
- 
+
 void TM1637Display::showNumberDec(int num, bool leading_zero, uint8_t length, uint8_t pos)
 {
 	uint8_t digits[4];
 	const static int divisors[] = { 1, 10, 100, 1000 };
 	bool leading = true;
-	
+
 	for(int8_t k = 0; k < 4; k++) {
 	    int divisor = divisors[4 - 1 - k];
 		int d = num / divisor;
-		
+
 		if (d == 0) {
 		  if (leading_zero || !leading || (k == 3))
 		    digits[k] = encodeDigit(d);
@@ -121,21 +121,33 @@ void TM1637Display::showNumberDec(int num, bool leading_zero, uint8_t length, ui
 			leading = false;
 		}
 	}
-	
+
 	setSegments(digits + (4 - length), length, pos);
+}
+
+void TM1637Display::showNumberHex(int num, bool leading_zero, uint8_t length, uint8_t pos)
+{
+  uint8_t digits[4] = { 0, 0, 0, 0 };
+  int digit = 3;	// Start with the rightmost digit
+
+  do {
+	  digits[digit--] = encodeDigit(num & 0x0f);
+	  num >>= 4;
+  } while ((num || leading_zero) & digit >= 0);
+  setSegments(digits + (4 - length), length, pos);
 }
 
 void TM1637Display::bitDelay()
 {
 	delayMicroseconds(50);
 }
-   
+
 void TM1637Display::start()
 {
   pinMode(m_pinDIO, OUTPUT);
   bitDelay();
 }
-   
+
 void TM1637Display::stop()
 {
 	pinMode(m_pinDIO, OUTPUT);
@@ -145,7 +157,7 @@ void TM1637Display::stop()
 	pinMode(m_pinDIO, INPUT);
 	bitDelay();
 }
-  
+
 bool TM1637Display::writeByte(uint8_t b)
 {
   uint8_t data = b;
@@ -155,39 +167,39 @@ bool TM1637Display::writeByte(uint8_t b)
     // CLK low
     pinMode(m_pinClk, OUTPUT);
     bitDelay();
-    
+
 	// Set data bit
     if (data & 0x01)
       pinMode(m_pinDIO, INPUT);
     else
       pinMode(m_pinDIO, OUTPUT);
-    
+
     bitDelay();
-	
+
 	// CLK high
     pinMode(m_pinClk, INPUT);
     bitDelay();
     data = data >> 1;
   }
-  
+
   // Wait for acknowledge
   // CLK to zero
   pinMode(m_pinClk, OUTPUT);
   pinMode(m_pinDIO, INPUT);
   bitDelay();
-  
+
   // CLK to high
   pinMode(m_pinClk, INPUT);
   bitDelay();
   uint8_t ack = digitalRead(m_pinDIO);
   if (ack == 0)
     pinMode(m_pinDIO, OUTPUT);
-	
-	
+
+
   bitDelay();
   pinMode(m_pinClk, OUTPUT);
   bitDelay();
-  
+
   return ack;
 }
 
@@ -196,5 +208,31 @@ uint8_t TM1637Display::encodeDigit(uint8_t digit)
 	return digitToSegment[digit & 0x0f];
 }
 
-   
+void TM1637Display::clear(void)
+{
+	static const uint8_t naught[] = { 0,0,0,0 };
 
+	setSegments(naught);
+}
+
+void TM1637Display::dec(void)
+{
+	m_mode = display_mode_dec;
+};
+
+void TM1637Display::hex(void)
+{
+	m_mode = display_mode_hex;
+};
+
+void TM1637Display::operator = (int num)
+{
+	switch (m_mode) {
+	case display_mode_hex:
+		showNumberHex(num, true);	// hex uses leading zeroes by default
+		break;
+	default:
+		showNumberDec(num, false);	// decimal uses no leading zeroes by default
+		break;
+	}
+}

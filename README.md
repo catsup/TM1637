@@ -2,6 +2,7 @@ TM1637
 ======
 Arduino library for TM1637 (LED Driver)
 
+Based on https://github.com/avishorp/TM1637, with a few additional features.
 
 Description
 -----------
@@ -21,6 +22,7 @@ The library provides a single class named TM1637Display. An instance of this cla
 
 * `setSegments` - Sets the raw value of the segments of each digit
 * `showNumberDec` - Displays a decimal number
+* `showNumberHex` - Displays a hexadecimal number
 * `setBrightness` - Sets the brightness of the display
 
 The information given above is only a summary. Please refer to TM1637Display.h for more information. An example is included, demonstarting the operation of most of the functions.

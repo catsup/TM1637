@@ -36,7 +36,7 @@ public:
   //! @param pinClk - The number of the digital pin connected to the clock pin of the module
   //! @param pinDIO - The number of the digital pin connected to the DIO pin of the module
   TM1637Display(uint8_t pinClk, uint8_t pinDIO);
-  
+
   //! Sets the brightness of the display.
   //!
   //! The setting takes effect when a command is given to change the data being
@@ -44,7 +44,7 @@ public:
   //!
   //! @param brightness A number from 0 (lowes brightness) to 7 (highest brightness)
   void setBrightness(uint8_t brightness);
-  
+
   //! Display arbitrary data on the module
   //!
   //! This function receives raw segment values as input and displays them. The segment data
@@ -58,7 +58,7 @@ public:
   //! @param length The number of digits to be modified
   //! @param pos The position from which to start the modification (0 - leftmost, 3 - rightmost)
   void setSegments(const uint8_t segments[], uint8_t length = 4, uint8_t pos = 0);
-  
+
   //! Displayes a decimal number
   //!
   //! Dispalyes the given argument as a decimal number
@@ -71,7 +71,8 @@ public:
   //!        the number must be between 0 to 99)
   //! @param pos The position least significant digit (0 - leftmost, 3 - rightmost)
   void showNumberDec(int num, bool leading_zero = false, uint8_t length = 4, uint8_t pos = 0);
-  
+  void showNumberHex(int num, bool leading_zero = false, uint8_t length = 4, uint8_t pos = 0);
+
   //! Translate a single digit into 7 segment code
   //!
   //! The method accepts a number between 0 - 15 and converts it to the
@@ -83,19 +84,30 @@ public:
   //!         bit 6 - segment G; bit 7 - always zero)
   uint8_t encodeDigit(uint8_t digit);
 
+  //! Clear the display
+  void clear(void);
+
+  //! Display modes (decimal, hex)
+  //!
+  void dec(void);
+  void hex(void);
+
+  void operator = (int num);
+
 protected:
    void bitDelay();
-   
+
    void start();
-   
+
    void stop();
-   
+
    bool writeByte(uint8_t b);
-   
+
 private:
 	uint8_t m_pinClk;
 	uint8_t m_pinDIO;
 	uint8_t m_brightness;
+	enum { display_mode_dec, display_mode_hex } m_mode;
 };
 
 #endif // __TM1637DISPLAY__
