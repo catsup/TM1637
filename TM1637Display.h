@@ -86,6 +86,7 @@ public:
 
   //! Clear the display
   void clear(void);
+  void setColon(bool on);
 
   //! Display modes (decimal, hex)
   //!
@@ -108,6 +109,7 @@ private:
 	uint8_t m_pinDIO;
 	uint8_t m_brightness;
 	enum { display_mode_dec, display_mode_hex } m_mode;
+	bool	m_colon;
 };
 
 #endif // __TM1637DISPLAY__

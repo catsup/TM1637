@@ -101,40 +101,32 @@ void TM1637Display::setSegments(const uint8_t segments[], uint8_t length, uint8_
 
 void TM1637Display::showNumberDec(int num, bool leading_zero, uint8_t length, uint8_t pos)
 {
-	uint8_t digits[4];
-	const static int divisors[] = { 1, 10, 100, 1000 };
-	bool leading = true;
+	uint8_t digits[4] = {};
+	int digit = 3;	// Start with the rightmost digit
 
-	for(int8_t k = 0; k < 4; k++) {
-	    int divisor = divisors[4 - 1 - k];
-		int d = num / divisor;
+	do {
+		digits[digit--] = encodeDigit(num % 10);
+		num /= 10;
+	} while ((num || leading_zero) & digit >= 0);
 
-		if (d == 0) {
-		  if (leading_zero || !leading || (k == 3))
-		    digits[k] = encodeDigit(d);
-	      else
-		    digits[k] = 0;
-		}
-		else {
-			digits[k] = encodeDigit(d);
-			num -= d * divisor;
-			leading = false;
-		}
-	}
+	if (m_colon) digits[1] |= 0x80;
 
 	setSegments(digits + (4 - length), length, pos);
 }
 
 void TM1637Display::showNumberHex(int num, bool leading_zero, uint8_t length, uint8_t pos)
 {
-  uint8_t digits[4] = { 0, 0, 0, 0 };
-  int digit = 3;	// Start with the rightmost digit
+	uint8_t digits[4] = { 0, 0, 0, 0 };
+	int digit = 3;	// Start with the rightmost digit
 
-  do {
-	  digits[digit--] = encodeDigit(num & 0x0f);
-	  num >>= 4;
-  } while ((num || leading_zero) & digit >= 0);
-  setSegments(digits + (4 - length), length, pos);
+	do {
+		digits[digit--] = encodeDigit(num & 0x0f);
+		num >>= 4;
+	} while ((num || leading_zero) & digit >= 0);
+
+	if (m_colon) digits[1] |= 0x80;
+
+	setSegments(digits + (4 - length), length, pos);
 }
 
 void TM1637Display::bitDelay()
@@ -214,6 +206,11 @@ void TM1637Display::clear(void)
 
 	setSegments(naught);
 }
+
+void TM1637Display::setColon(bool state)
+{
+	m_colon = state;
+};
 
 void TM1637Display::dec(void)
 {
